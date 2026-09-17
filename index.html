@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nido Creativo | Página de prueba</title>
+  <meta name="description" content="Página de prueba de Nido Creativo para validar medición de eventos de Meta.">
+  <style>
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,sans-serif;background:#f7f5f2;color:#1f2937}
+    .wrap{min-height:100vh;display:grid;place-items:center;padding:32px}
+    .card{max-width:760px;width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:24px;padding:48px;box-shadow:0 18px 50px rgba(0,0,0,.08)}
+    .tag{display:inline-block;padding:7px 12px;border-radius:999px;background:#111827;color:#fff;font-size:13px;font-weight:700;letter-spacing:.04em}
+    h1{font-size:clamp(38px,7vw,68px);line-height:.95;margin:22px 0 18px;letter-spacing:-.04em}
+    p{font-size:18px;line-height:1.6;color:#5b6472;max-width:620px}
+    .btn{margin-top:20px;border:0;border-radius:12px;padding:15px 22px;background:#111827;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+    .btn:hover{opacity:.9}.small{font-size:13px;color:#8a93a1;margin-top:18px}
+    .modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);padding:20px;place-items:center}
+    .modal.open{display:grid}.box{background:#fff;border-radius:18px;padding:28px;max-width:440px;width:100%}
+    label{display:block;font-weight:700;margin:12px 0 7px} input{width:100%;padding:13px;border:1px solid #d1d5db;border-radius:10px;font-size:16px}
+    .row{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}.secondary{background:#e5e7eb;color:#111827}
+    #status{margin-top:14px;font-size:14px}
+  </style>
+
+  <!-- META PIXEL: reemplazar 978985805231754 por el ID real -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '978985805231754');
+    fbq('track', 'PageView');
+  </script>
+  <!-- End Meta Pixel -->
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <span class="tag">NIDO CREATIVO</span>
+      <h1>Ideas que hacen crecer marcas.</h1>
+      <p>Diseño, creatividad y comunicación para marcas que quieren verse mejor y comunicar con claridad.</p>
+      <button class="btn" id="leadBtn">Quiero recibir información</button>
+      <div class="small">Página de prueba para validación de medición de eventos.</div>
+    </section>
+  </main>
+
+  <div class="modal" id="modal">
+    <div class="box">
+      <h2>Recibí información</h2>
+      <p style="font-size:15px">Ingresá un email de prueba para generar el evento Lead.</p>
+      <form id="leadForm">
+        <label for="email">Email</label>
+        <input id="email" type="email" required placeholder="tu@email.com">
+        <div class="row">
+          <button type="button" class="btn secondary" id="closeBtn">Cancelar</button>
+          <button type="submit" class="btn">Enviar</button>
+        </div>
+        <div id="status"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById('modal');
+    const leadBtn = document.getElementById('leadBtn');
+    const closeBtn = document.getElementById('closeBtn');
+    const form = document.getElementById('leadForm');
+    const status = document.getElementById('status');
+
+    leadBtn.onclick = () => modal.classList.add('open');
+    closeBtn.onclick = () => modal.classList.remove('open');
+
+    function makeEventId() {
+      return 'nido-lead-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const eventId = makeEventId();
+      const eventTime = Math.floor(Date.now()/1000);
+      const eventSourceUrl = window.location.href;
+
+      // Navegador / Pixel: mismo event_id que enviaremos por CAPI.
+      fbq('track', 'Lead', {content_name:'Solicitud de información'}, {eventID:eventId});
+
+      // Servidor / CAPI: se envía al endpoint seguro del backend.
+      // Reemplazar esta URL luego de desplegar el Worker/Function.
+      const CAPI_ENDPOINT = 'CAPI_ENDPOINT_URL';
+
+      status.textContent = 'Enviando...';
+      try {
+        const response = await fetch(CAPI_ENDPOINT, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            event_id: eventId,
+            event_time: eventTime,
+            event_source_url: eventSourceUrl,
+            email: email
+          })
+        });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        status.textContent = '¡Listo! Evento de prueba enviado.';
+        form.reset();
+      } catch (err) {
+        status.textContent = 'El evento de navegador fue enviado. Falta conectar el endpoint CAPI.';
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
